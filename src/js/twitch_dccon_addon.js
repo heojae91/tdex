@@ -64,7 +64,7 @@ const kResourceCSSTDEX = '#tdex-ui-window-container,.tdex-ui-box-container,.tdex
 
 // 스크립트에서 사용하는 상수를 이곳에 정의합니다.
 
-const kDebug                            = false;
+const kDebug                            = true;
 
 const kPlatformUserScript               = (typeof(GM_xmlhttpRequest) !== "undefined");
 const kPlatformFirefox                  = !kPlatformUserScript && (typeof(browser)  !== "undefined");
@@ -101,6 +101,8 @@ const kSettingsSSEnableSSDL              = "TDEX_SS_ENABLE_SSDL";
 const kSettingsSSSSDLUri                 = "TDEX_SS_SSDL_URI";
 const kSettingsSSConverter               = "TDEX_SS_SSDL_CONVERTER";
 
+const kUriHomePage                      = "https://github.com/gjirap/tdex"
+const kUriUpdateJson                    = "https://api.myjson.com/bins/17gnwh";
 const kUriJSAssistDCConList             = "https://gist.githubusercontent.com/rishubil/2bbfa7028cff75b7a0fbdf532717d4b7/raw/529b9d139589e3cb5af2bf4e1b16917a8e048e12/xunz.json";
 
 const kWaitableStateBad                 = 0;
@@ -539,7 +541,10 @@ const tdex = (function() {
   })(); // namespace base
 
   function SafeCall(fn) {
-    if (typeof(fn) === "function") fn();
+    if (typeof(fn) === "function") {
+      return(fn());
+    }
+    return(undefined);
   }
 
   function WaitForWrapper(handler, arg) {
@@ -621,6 +626,25 @@ const tdex = (function() {
     // 스크립트에서 사용할 모든 UI 창들을 이곳에 정의합니다.
     // 볼 필요 없으니 개요 축소시켜주세요.
     const show = (function() {
+      function updateFinded() {
+        let jqWindow = CreateWindow("box-small");
+        WindowApplyLayout(jqWindow, layout.TCB1);
+        jqWindow.find("#tdex-ui-id-title").html("트위치 디시콘 에드온");
+        jqWindow.find("#tdex-ui-id-clientarea").append(
+          $("<span></span><br/>").html("새로운 버전을 발견하였습니다.")
+        ).append(
+          $("<span></span><br/>").html("아래 링크에서 다운받으실 수 있습니다.")
+        ).append(
+          $("<a></a>").html("링크").attr("href", kUriHomePage)
+        );
+        jqWindow.find("#tdex-ui-id-button1").html("확인");
+        jqWindow.find("#tdex-ui-id-button1").click(() => { WindowHide(jqWindow); UIManager.getInstance().removeFromWindowContainer(jqWindow); jqWindow = null; SafeCall(onCheckEnd) });
+  
+        WindowToggleMargin(jqWindow);
+        UIManager.getInstance().addToWindowContainer(jqWindow);
+        WindowShow(jqWindow);
+      }
+
       // Application::firstRun
       function firstGlobalSetting(onShowEnd) {
         let jqWindow = tdex.ui.CreateWindow("box-small");
@@ -851,7 +875,8 @@ const tdex = (function() {
       return({
         firstGlobalSetting: firstGlobalSetting,
         firstStreamerSetting: streamerSettings,
-        streamerSettings: streamerSettings
+        streamerSettings: streamerSettings,
+        updateFinded: updateFinded
       });
     })(); // namespace show
 
@@ -1180,7 +1205,7 @@ const tdex = (function() {
     }
 
     function WindowHide(jqWin) {
-      jqWin.show();
+      jqWin.hide();
       UIManager.getInstance().update();
     }
 
@@ -2356,6 +2381,7 @@ const tdex = (function() {
       if (IsCommonEvent(e) || !Settings.ss(StreamerInspector.getInstance().getStreamerName()).isEnableAddon()) {
         return;
       }
+      const disableAutoScroll = (document.getElementsByClassName("chat-list__more-messages")[0] || document.getElementsByClassName("video-chat__sync-button")[0]);
       let cr = ChattingRoomHooker.getInstance().getChatContainer();
       let pageType = PageInspector.getInstance().getPageType();
       let chatMessages = ChatMessageCollector.getInstance().getChatMessages();
@@ -2395,7 +2421,7 @@ const tdex = (function() {
             break;
           }
           case kPageTypeBetaChattingRoom: {
-            jqNewMessage.css("margin-top", "5px");
+            jqNewMessage.css("margin-top", "10px");
             $("<div></div>").addClass("tw-tooltip-wrapper").attr("data-a-target", "emote-name").append(
               $("<img>").addClass("chat-line__message--emote").attr("alt", message).attr("src", dcconImageUri).css("height", kSettingsBSDCConImageSize)
             ).append(
@@ -2405,9 +2431,13 @@ const tdex = (function() {
           }
         }
         elmMessage.parentNode.replaceChild(jqNewMessage.get(0), elmMessage);
-        cr.scrollTop = cr.scrollHeight + kSettingsBSDCConImageSize + 100;
+        if (!disableAutoScroll) {
+          cr.scrollTop = cr.scrollHeight + kSettingsBSDCConImageSize + 100;
+        }
       });
-      cr.scrollTop = cr.scrollHeight + kSettingsBSDCConImageSize + 100;
+      if (!disableAutoScroll) {
+        cr.scrollTop = cr.scrollHeight + kSettingsBSDCConImageSize + 100;
+      }
     };
 
     let s_instance = new teDCConCommandReplacer();
@@ -2516,9 +2546,9 @@ const tdex = (function() {
 
     IsCommonEvent: IsCommonEvent,
     WaitForHelper: WaitForHelper,
-    WaitForStable: WaitForStable,
-    WaitForTrue: WaitForTrue,
+    WaitForResponse,
     RefineUri: RefineUri,
+    SafeCall: SafeCall,
 
     Settings: Settings,
     PageInspector: PageInspector,
@@ -2533,7 +2563,7 @@ const tdex = (function() {
 let app = (function() {
   function Application() {
     this._name    = "Twitch dccon addon";
-    this._version = "1.1.2";
+    this._version = "1.2.0d";
   }
 
   Application.prototype.firstRun = function() {
@@ -2542,6 +2572,20 @@ let app = (function() {
 
   Application.prototype.log = function(message) {
     console.log("[%s] %s", this._name, message);
+  };
+
+  Application.prototype.checkUpdate = function(onCheckEnd) {
+    tdex.WaitForResponse(kUriUpdateJson, function(xhr) {
+      let jsonString = xhr.responseText;
+      if (xhr.status !== 200 || jsonString.length < 1) {
+        return;
+      }
+      let dic = JSON.parse(jsonString);
+      if (dic["version"] === app._version) {
+        return;
+      }
+      tdex.WaitForHelper(tdex.ui.UIManager.getInstance(), () => { tdex.ui.show.updateFinded(); });      
+    });
   };
 
   Application.prototype.init = function() {
@@ -2592,6 +2636,7 @@ let app = (function() {
 
   Application.prototype.run = function() {
     tdex.PageInspector.getInstance().start();
+    app.checkUpdate();
   };
 
   let s_instance = new Application();
