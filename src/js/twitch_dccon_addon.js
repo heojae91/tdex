@@ -1875,9 +1875,7 @@ const tdex = (function() {
         () => { 
           Settings.setGood(); 
           app.log("Settings.save() >> settings were successfully saved.");
-          if (typeof(callback) === "function") {
-            callback(); 
-          }
+          SafeCall(callback);
         }
       );
     };
@@ -1977,9 +1975,17 @@ const tdex = (function() {
     teSettingsStreamerSpecific.prototype.set = function(key, value) {
       this._dic.set(key, value);
     };
-    teSettingsStreamerSpecific.prototype.save = function() {
+    teSettingsStreamerSpecific.prototype.save = function(callback) {
       Settings._sdic.set(this._streamerName, this._dic);
-      Settings.save();
+      Settings.save(callback);
+    };
+    teSettingsStreamerSpecific.prototype.makeFromGlobal = function() {
+      this.set(kSettingsSSEnableAddon, true);
+      this.set(kSettingsSSEnableJODL, kSettingsBSEnableJODL);
+      this.set(kSettingsSSEnableLimitedJODL, kSettingsBSEnableLimitedJODL);
+      this.set(kSettingsSSEnableSSDL, false);
+      this.set(kSettingsSSSSDLUri, "");
+      this.set(kSettingsSSConverter, "");
     };
 
     let s_instance = new teSettings();
@@ -2134,17 +2140,23 @@ const tdex = (function() {
         }
         if (this._streamerName !== streamerName) {
           if (Settings.ss(streamerName).isFirst()) {
-            this._streamerName = streamerName;
-            WaitForHelper(
-              ui.UIManager.getInstance(), 
-              () => { 
-                ui.show.streamerSettings( 
-                  () => { 
-                    StreamerInspector.getInstance().updateForcibly(streamerName);
-                  } 
-                ); 
-              } 
-            );
+            if (Settings.get(kSettingsBSEnableAskAtFirst)) {
+              this._streamerName = streamerName;
+              WaitForHelper(
+                ui.UIManager.getInstance(), 
+                () => { 
+                  ui.show.streamerSettings( 
+                    () => { 
+                      StreamerInspector.getInstance().updateForcibly(streamerName);
+                    } 
+                  ); 
+                } 
+              );
+            }
+            else {
+              ss.makeFromGlobal();
+              ss.save(() => { StreamerInspector.getInstance().updateForcibly(streamerName); });
+            }
             return;
           }
           else {
