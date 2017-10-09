@@ -10,7 +10,8 @@ A script running on www.twitch.tv & go.twitch.tv that replace dccon text command
 ### Userscript
 ##### Firefox, Edge, Chrome
 [GitHub](https://github.com/gjirap/tdex/blob/master/src/js/twitch_dccon_addon.js)
-[OneDrive]
+
+[OneDrive](https://1drv.ms/t/s!AnfmmXRVJRPmqTtN-QdTK2eiYRnM)
 
 ## Version history
 You can find this in [here](https://github.com/gjirap/tdex/blob/master/VERSION.md).
