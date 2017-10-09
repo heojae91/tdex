@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Twitch DCCon Addon
 // @namespace    twitch_extension
-// @version      1.1.3
+// @version      1.2.0
 // @description  Replace a dccon command text with image.
 // @author       Jirap
 // @include      https://go.twitch.tv/*
@@ -12,7 +12,8 @@
 // @grant        GM_deleteValue
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
-// @require      https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js
+// @require      https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js
+// @require      https://cdn.rawgit.com/zenorocha/clipboard.js/v1.7.1/dist/clipboard.min.js
 // ==/UserScript==
 
 (function() {
@@ -21,6 +22,14 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // 외부 라이브러리를 이곳에 정의합니다.
+
+// jQuery 
+// Copyright JS Foundation and other contributors, https://js.foundation/
+// MIT License
+
+// clipboard.js
+// Copyright Zeno Rocha, https://clipboardjs.com/
+// MIT License
 
 // parseUri 1.2.2
 // Copyright 2007 Steven Levithan
@@ -58,13 +67,19 @@ parseUri.options = {
 
 // 스크립트에서 사용하는 리소스를 이곳에 정의합니다.
 
-const kResourceCSSTDEX = '#tdex-ui-window-container,.tdex-ui-box-container,.tdex-ui-box-content-old,.tdex-ui-box-margin{position:absolute;width:100%;height:100%}.tdex-ui-button,.tdex-ui-switch-bg{border-style:solid;display:inline-block}body{margin:0}#tdex-ui-window-container{margin:0;z-index:10001;top:0;left:0}.tdex-ui-box-container{z-index:1002}.tdex-ui-box-margin{background-color:#000;opacity:0;z-index:10003}.tdex-ui-box-margin.tdex-ui-box-margin-visible{opacity:.9}.tdex-ui-box-content{position:relative;width:100%;height:100%;z-index:10009}.tdex-ui-box-content-old{left:-100%;top:0;z-index:10009}.tdex-ui-box-1,.tdex-ui-box-big,.tdex-ui-box-medium,.tdex-ui-box-small{margin:0;position:absolute;width:800px;left:calc(50% - 400px);background-color:#4b367c;color:#F3F3F3;z-index:10010;font-family:"맑은 고딕"}.tdex-ui-box-small{height:260px;top:calc(50% - 200px);overflow:hidden}.tdex-ui-box-1{height:320px;top:calc(50% - 220px)}.tdex-ui-box-medium{height:420px;top:calc(50% - 260px);overflow:hidden}.tdex-ui-box-big{height:600px;top:calc(50% - 320px);overflow:hidden}.tdex-ui-switch,.tdex-ui-switch-container{width:fit-content}.tdex-ui-switch{margin-top:5px}.tdex-ui-switch-has-tooltip .tdex-ui-switch-container::after{content:"끔";position:relative;top:-4px;left:10px;font-size:15px}.tdex-ui-switch-has-tooltip.tdex-ui-switch-state-on .tdex-ui-switch-container::after{content:"켬"}.tdex-ui-switch-bg{border-width:3px;border-color:#C3C3C3;border-radius:15px;width:46px;height:21px;background-color:#3F3F3F}.tdex-ui-switch-fg{position:relative;border-radius:13px;width:13px;height:13px;top:1px;left:1px;margin:0;background-color:#C3C3C3;transition:left .3s;-webkit-transition:left .3s}.tdex-ui-switch-bg:hover{border-color:#E7E7E7}.tdex-ui-switch-bg:hover .tdex-ui-switch-fg{background-color:#E7E7E7}.tdex-ui-switch-state-on .tdex-ui-switch-bg{background-color:rgba(16,78,154,.75)}.tdex-ui-switch-state-on .tdex-ui-switch-fg{left:26px}.tdex-ui-button{margin:0;padding:0 17px;border-width:2px;border-color:transparent;background-color:#C3C3C3;color:#333;text-align:center;min-width:80px;height:35px;line-height:31px;font-size:15px}.tdex-ui-button:hover{border-color:#E7E7E7}.tdex-ui-textarea{resize:none;border:none;font-family:"맑은 고딕";color:#E7E7E7;background-color:#3F3F3F}.tdex-ui-textarea:focus{color:#000;background-color:#F3F3F3}.tdex-ui-box-small .tdex-ui-bigdick{width:100%;height:100%;line-height:250px;text-align:center}.tdex-ui-box-1 .tdex-ui-bigdick{width:100%;height:100%;line-height:300px;text-align:center}.tdex-ui-bigdick span{font-size:60px}.tdex-ui-layout-tcb3-title{position:relative;top:30px;padding:0 45px}.tdex-ui-layout-tcb3-title span{font-size:30px}.tdex-ui-layout-tcb3-clientarea{margin-top:60px;padding:0 45px;font-size:15px}.tdex-ui-layout-tcb3-button-container{position:absolute;bottom:25px;right:35px}.tdex-ui-button.tdex-ui-button-hasgap{margin:0 0 0 30px}@keyframes tdex-ui-kf-fadeinout{0%,100%{opacity:0}38%,55%{opacity:1}}@keyframes tdex-ui-kf-slideout-left{from{left:0}to{left:-100%}}@keyframes tdex-ui-kf-slidein-right{from{left:100%}to{left:0}}.tdex-ui-ani-fadeinout-5s{opacity:0;animation:tdex-ui-kf-fadeinout 5s}.tdex-ui-ani-fadeinout-4s{opacity:0;animation:tdex-ui-kf-fadeinout 4s}.tdex-ui-ani-slideout-left-1s{animation:tdex-ui-kf-slideout-left 1s}.tdex-ui-ani-slidein-right-1s{animation:tdex-ui-kf-slidein-right 1s}.tdex-ui-style-full-width{width:100%}.tdex-ui-style-text-bold{font-weight:700}';
+const kResourceCSSTDEX = '#tdex-ui-window-container,.tdex-ui-box-container,.tdex-ui-box-content-old,.tdex-ui-box-margin{position:absolute;width:100%;height:100%}.tdex-ui-button,.tdex-ui-switch-bg{border-style:solid;display:inline-block}body{margin:0}#tdex-ui-window-container{margin:0;z-index:10001;top:0;left:0}.tdex-ui-box-container{z-index:10002}.tdex-ui-box-margin{background-color:#000;opacity:0;z-index:10003}.tdex-ui-box-margin.tdex-ui-box-margin-visible{opacity:.9}.tdex-ui-box-content{position:relative;width:100%;height:100%;z-index:10009}.tdex-ui-box-content-old{left:-100%;top:0;z-index:10009}.tdex-ui-box-1,.tdex-ui-box-big,.tdex-ui-box-medium,.tdex-ui-box-small{margin:0;position:absolute;width:800px;left:calc(50% - 400px);background-color:#4b367c;color:#F3F3F3;z-index:10010;font-family:"맑은 고딕"}.tdex-ui-box-small{height:260px;top:calc(50% - 200px);overflow:hidden}.tdex-ui-box-1{height:320px;top:calc(50% - 220px)}.tdex-ui-box-medium{height:420px;top:calc(50% - 260px);overflow:hidden}.tdex-ui-box-big{height:600px;top:calc(50% - 320px);overflow:hidden}.tdex-ui-switch,.tdex-ui-switch-container{width:fit-content}.tdex-ui-switch{margin-top:5px}.tdex-ui-switch-has-tooltip .tdex-ui-switch-container::after{content:"끔";position:relative;top:-4px;left:10px;font-size:15px}.tdex-ui-switch-has-tooltip.tdex-ui-switch-state-on .tdex-ui-switch-container::after{content:"켬"}.tdex-ui-switch-bg{border-width:3px;border-color:#C3C3C3;border-radius:15px;width:46px;height:21px;background-color:#3F3F3F}.tdex-ui-switch-fg{position:relative;border-radius:13px;width:13px;height:13px;top:1px;left:1px;margin:0;background-color:#C3C3C3;transition:left .3s;-webkit-transition:left .3s}.tdex-ui-switch-bg:hover{border-color:#E7E7E7}.tdex-ui-switch-bg:hover .tdex-ui-switch-fg{background-color:#E7E7E7}.tdex-ui-switch-state-on .tdex-ui-switch-bg{background-color:rgba(16,78,154,.75)}.tdex-ui-switch-state-on .tdex-ui-switch-fg{left:26px}.tdex-ui-button{margin:0;padding:0 17px;border-width:2px;border-color:transparent;background-color:#C3C3C3;color:#333;text-align:center;min-width:80px;height:35px;line-height:31px;font-size:15px}.tdex-ui-button:hover{border-color:#E7E7E7}.tdex-ui-textarea{resize:none;border:none;font-family:"맑은 고딕";color:#E7E7E7;background-color:#3F3F3F}.tdex-ui-textarea:focus{color:#000;background-color:#F3F3F3}.tdex-ui-box-ds,.tdex-ui-ds-previewer-name,.tdex-ui-license-img::after{font-family:"맑은 고딕";color:#F3F3F3}.tdex-ui-box-ds,.tdex-ui-box-ds-previewer{position:absolute;bottom:60px;z-index:10008;background-color:#4b367c;box-shadow:0 0 3px 3px rgba(181,221,253,.2)}.tdex-ui-box-small .tdex-ui-bigdick{width:100%;height:100%;line-height:250px;text-align:center}.tdex-ui-box-1 .tdex-ui-bigdick{width:100%;height:100%;line-height:300px;text-align:center}.tdex-ui-bigdick span{font-size:60px}.tdex-ui-license-img::after{content:attr(data-a-uri);font-size:16px;margin-left:10px}.tdex-ui-license-img img{width:20px;height:20px}.tdex-ui-box-ds{margin:0;width:310px;height:460px;right:20px;overflow:hidden}.tdex-ui-ds-list-container{overflow-y:auto;margin-top:20px;margin-left:5px;width:300px;height:415px}.tdex-ui-box-ds-previewer{right:340px;width:110px;height:135px}.tdex-ui-ds-previewer-name{margin-top:3px;margin-left:5px;font-size:12px}.tdex-ui-ds-previewer-image{margin-top:5px;margin-left:5px;width:100px;height:100px}ul.tdex-ui-ds-list{list-style:none;margin:0;padding:0}.tdex-ui-ds-list li{display:inline-block;width:40px;height:40px}.tdex-ui-dccon-icon img{cursor:pointer;width:100%;height:100%}.tdex-ui-ds-button-container{position:relative;cursor:pointer;left:210px;top:10px}.tdex-ui-ds-button{margin-left:10px;display:inline-block}.tdex-ui-ds-button img{width:20px;height:20px}.tdex-ui-layout-tcb3-title{position:relative;top:30px;padding:0 45px}.tdex-ui-layout-tcb3-title span{font-size:30px}.tdex-ui-layout-tcb3-clientarea{margin-top:60px;padding:0 45px;font-size:15px}.tdex-ui-layout-tcb3-button-container{position:absolute;bottom:25px;right:35px}.tdex-ui-button.tdex-ui-button-hasgap{margin:0 0 0 30px}@keyframes tdex-ui-kf-fadeinout{0%,100%{opacity:0}38%,55%{opacity:1}}@keyframes tdex-ui-kf-slideout-left{from{left:0}to{left:-100%}}@keyframes tdex-ui-kf-slidein-right{from{left:100%}to{left:0}}.tdex-ui-ani-fadeinout-5s{opacity:0;animation:tdex-ui-kf-fadeinout 5s}.tdex-ui-ani-fadeinout-4s{opacity:0;animation:tdex-ui-kf-fadeinout 4s}.tdex-ui-ani-slideout-left-1s{animation:tdex-ui-kf-slideout-left 1s}.tdex-ui-ani-slidein-right-1s{animation:tdex-ui-kf-slidein-right 1s}.tdex-ui-style-full-width{width:100%}.tdex-ui-style-text-bold{font-weight:700}';
+// https://icons8.com/icon/14099/Settings
+const kResourceIconSettings = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAADwklEQVRogc1aW5HrMAwthEAIhEIIhEIohDAIhEIIhEIIhEAIhEA49yNSLT8lO+ntamZnd9aypCPLkmzndvsCAdiQp/0bOi8nAH0BBFP3aztVAjCQsUtibKGx4Qem1RGAkYx9JcZeNDb+wrYbgA5Ab+SdydhnYoxBvo2y7nWWloV1AN5WTwreR2LskQu7BO8TwA5gbbVdCpMgmIrehMtYfUZeMXMRzxzobAcTgNjIQ0x7uGGJn0OnZCgDfSbGBjG+A5gArM1gEiB68X8WDBybd6Dfu8WDcJlLyrgHMpaMTjuYHIiAZ0KaFhz7oFgniCcMWbkKXcBfD4YmsWemAt+dgLLy6gwjVoJBRAlC8I6Cz6YLrqhBm6R530olOTi6BXZuXQ2S4XXayhNEEbKQLXOrgI0ERFX6f5HYj1vz6gchNlxrokn/XYRUdv9YhX0240X2WfXKTHU+IsgrnC1MS0srOZEhO/2s5BRTxoHrAtSEYyK4diGbigPlL+hk8rCQVb/JE4ZxjPYKL9cVXj2u+ncc6fMBv5BGbU5Gf1U05ASxYq1RlPG8lEKBgC1soMEG5tXrBxky4KieL7jYZipmDBECi9VzwkDNSbJZBY76NpOTh0+kBAaHtEM5O8CdMeytwy3azJqjUn2ZRzfx90KeHT2kukETza9OkWKuaTPD7TWOnCUCUmuEEM57o7pgydU8of8yIBuJ6BvmqidGg4zLgJjSc2Zud4H+PxFa3Ms1d9gRELi0NqKiQYRLvWrlT8ydWLeRP1UmPkBK6XfTlMDvxfoKEPKwpKXfBdb7ZLi0NiO+INBOiZzn1fuqxJxi6oXLbOysFSJyYCnAMDZt8A9ha2ll4F9uqD2U4J1MRheUMmWNI17ZNLLiQcjh2OZwKl42CJkmwBYwMxtWyV+ixWIYKiu/JoxTpLlo4YjrGX5bv1GYmNI0/CPE0AxACGSvbKeXt07vdZcftBp8VB2uMbFaP06tCvzDUnWxu4rg30TWRwQaDkvfIuFQc53iiaZ71qsAanLgl4GnVajpnhXuLWNDY7EiAyeSsSpOk0de/SQa7I0oU8Fd+aR6tLdlUyL9psKUekT1nhXMTsuBQXADQiHINcMDVJAtz987ybvDvyr6tDnNIApgJuHBFenHzpqntwlB24O4zRlPgciAYZpLAgXYiAfGo21ihdtBJMDsMGQMATzakHAFTn0+g3iePg1CCK35YCD7dYMIPev1T3cZiFqC27RRNyBC5jefcNQQ3IkuylwofBXx5wh+Fc5R/2s7TQTlQuMbOv8BpvCtKWMyesQAAAAASUVORK5CYII=";
+// https://icons8.com/icon/40068/rotate
+const kResourceIconRefresh = " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAADCUlEQVR4nO2bbZXzIBCFK6ESIqESIqESKqEOKqESKqESkBAJkRAJz/sDetqFSRpgINl9ub/2bLLMzGU+CXs4NDQ0NDQ0FAVwBM7ADbgDBhiAaWvdisEZfX0Zygy21lMdQA885wyOJWDtOpsT7Hb8vrTbf5aAlYYbbA64Yr3kBBxXrL1fArC7/lhh9ClDxj4JwO7gsGB4ryTnG6YcglOVOiG7/IB18a+uHSFLMng7EoBuRgmjafiHPB9HZM8rT8KC8HsJ453MH/j4vVRqx1J6LAm9FRN4mCfAPbsL+gylFLlKO19E2E+5swS45xIJF20lpLgfirrbW/YiAe4dPywnoNNUwmd5rGG8k72GgE7wgqeWAtLuX1QWXyf/KwHuvbNAwllDAeMtarIXjZO/igD3rp+k87wA2/D46LMWjdchhoBe0LfLEe5nfp24itNhNQHu/dH7k2uOcN+litZ8DQibltYXYLs+P/l1uurqw+mdHwaEWbVMh1UAhIk7PgwEVyre9WmBsG+JD13Cg46LvqplgD2E+UR88iZMgPlNRSUI4ZtEgN9f1z11yQBhaxz//YGwnnb6qpYBYSVIIsAvgVWGHy14uscfjv6xEBhTFjHeIr2+qmVAOMPE9zCEtTS9p64M4OLp/khZ5OYtsvs54AU0mjjCWhofRxuBsIdJaoV1horKQHOIQ2OoqAzBc9OHOMJkUvU4LAWC+6fnrpkw2G0/gHwklqevwOhuzwWEkM33WOQz991NhkLsg1bzRng2sKuS6ELV3329A1zkXLCbhCiEqd7ufwiRPkJufkxGzY+2gpvBhr3BjPHlPtoyf0Gi+pxAOKtAjY+2yFUBKuUE5m+mTdQa2ZEbjpf7XQrLnbsfVLc0Yw8dxgUiOkVZS9dvx2o7Lygm1d9PPFM9gvcN8wfzt1CNJtHJQC6REhk37IDVvxR3hnZYjzqz4oa5e1bsZloSnAGPFUTkwrDjgexFhPnvDPeBdfNrJhmGzMvWuwDv/x65YXOB4V1BJvfz4J7d3bu/2+iGhoaGhl+AfxN5xrrsvEymAAAAAElFTkSuQmCC";
+// https://icons8.com/icon/14093/info
+const kResourceIconInfo = " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAADFElEQVR4nO2bXZHDMAyEC6EQAqEQAqEQCqEMAiEQAqEQDCEQAiEQvnuwM72zldaJpaSdy87cTB8ya2ktyX+60+nAgQMHDhwwBXAGrkADtIADemAMfz3wALrwzXVvm4sRnL7/cnQNHoGj2tufbAB1MFwb7qOFwM94y/rZzkX7cUJkOu7w+X3HR8kFL9o5/L4Ct/BNnyPE3n5Ps95lOH1ZyX0PHLP8Fn7lGnh5MVMOqDcaq18jsIZBUsj3YdbORuPegEEYd9QU/J0R1YzzzsrxaPwzclqM5pEQBpdCsd3C+ciWVrBjMLUDeX1vzAZ8b08jRaLVYHdp5k0GW2ZXZ24Xct73W4f9HJBrQqU5QJxvtrm2EPjaNEQ2PrTIpdm/KfD+gQLfVYiC8lVBCC+VIqMtQOCMV6i+lPAiqForGWshgGRvVUIYV36dvDrZCBB446X6rkm225qfC/x2uTwN8JU1Ln6Vrrn6CHaXpwFpVS0rKBuCtBguTwPS/N9915cL0i3y8tQl3WLelI38A2XuOHqXF2/SAqh6VW0sQB3RL9+7CHmketY2FiAuhOMakiEiqZSN/HgB4iVQ9fBjKYAK/5enQBXRD2tIXERSKxtpKUB8Jli+hyG9A1i/p5b5LQWIt8PdGpImIlE9BxgLUL6JI91MLM+j1/yWApSfCNE6VMzzmwiA5iGOtBCq1QFDAfQOcaTFRO3O3VAAvTsM5DRQ2Q9YCEB6Bii3V1BU5V7ASACnHrGkuypQOBlqC4B8LV6X8k7kXUSsuiSWAvnFWO0Cd64W7NedEQH50bbWHkR6jt79mowtH22FMAPlM8JCeyTn7R5tmW+Q2Py9ALk3YDBz/tfA0qoAG9UE5jvTNu0TkjYcU/jdjMeVInBk6/5i/KXD8EKISnGsV+23w2YzLxg217E14bE2Inh2mHfMd6E6TaFXA3mJlMRo8AesejI8OFrxbJfN6TAf2aEz7SWCA12GEKVwbN0ZugRBCPfvHI+BD/N3zc45Tjdf5bgEnp3fDb4WOJ4ryBh+T/8204Zvv9vpAwcOHDjwBfgBtQhTSh4iTvYAAAAASUVORK5CYII=";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // 스크립트에서 사용하는 상수를 이곳에 정의합니다.
 
-const kDebug                            = true;
+const kDebug                            = false;
 
 const kPlatformUserScript               = (typeof(GM_xmlhttpRequest) !== "undefined");
 const kPlatformFirefox                  = !kPlatformUserScript && (typeof(browser)  !== "undefined");
@@ -638,7 +653,7 @@ const tdex = (function() {
           $("<a></a>").html("링크").attr("href", kUriHomePage)
         );
         jqWindow.find("#tdex-ui-id-button1").html("확인");
-        jqWindow.find("#tdex-ui-id-button1").click(() => { WindowHide(jqWindow); UIManager.getInstance().removeFromWindowContainer(jqWindow); jqWindow = null; SafeCall(onCheckEnd) });
+        jqWindow.find("#tdex-ui-id-button1").click(() => { WindowHide(jqWindow); UIManager.getInstance().removeFromWindowContainer(jqWindow); jqWindow = null; });
   
         WindowToggleMargin(jqWindow);
         UIManager.getInstance().addToWindowContainer(jqWindow);
@@ -872,11 +887,33 @@ const tdex = (function() {
         WindowShow(jqWindow);
       }
 
+      function license() {
+        let jqWindow = template.DialogOk("box-medium", "");
+        jqWindow.find("#tdex-ui-id-title").html("저작권");
+        jqWindow.find("#tdex-ui-id-clientarea").append(
+          $("<div></div>").addClass("tdex-ui-license-img").attr("data-a-uri", "https://icons8.com/icon/14099/Settings").append(
+            $("<img>").attr("src", kResourceIconSettings)
+          )
+        ).append(
+          $("<div></div>").addClass("tdex-ui-license-img").attr("data-a-uri", "https://icons8.com/icon/40068/rotate").append(
+            $("<img>").attr("src", kResourceIconRefresh)
+          )
+        ).append(
+          $("<div></div>").addClass("tdex-ui-license-img").attr("data-a-uri", "https://icons8.com/icon/14093/info").append(
+            $("<img>").attr("src", kResourceIconInfo)
+          )
+        );
+        UIManager.getInstance().addToWindowContainer(jqWindow);
+        WindowShow(jqWindow);
+        return(jqWindow);
+      }
+
       return({
         firstGlobalSetting: firstGlobalSetting,
         firstStreamerSetting: streamerSettings,
         streamerSettings: streamerSettings,
-        updateFinded: updateFinded
+        updateFinded: updateFinded,
+        license: license
       });
     })(); // namespace show
 
@@ -1015,8 +1052,8 @@ const tdex = (function() {
       function Alert(message, focusable, handler) {
         let jqWin = CreateWindow("box-small");
         WindowApplyLayout(jqWin, layout.TCB1);
-        jqWin.find("#tdex-ui-id-title").text("트위치 디시콘 에드온");
-        jqWin.find("#tdex-ui-id-clientarea").text(message);
+        jqWin.find("#tdex-ui-id-title").html("트위치 디시콘 에드온");
+        jqWin.find("#tdex-ui-id-clientarea").html(message);
         let bt = jqWin.find("#tdex-ui-id-button1");
         bt.text("알겠습니다");
         if (handler) {
@@ -1073,7 +1110,7 @@ const tdex = (function() {
         let b = false;
         let c = document.getElementsByClassName("tdex-ui-box");
         for (let i = 0; i < c.length; ++i) {
-          if (c[i].getAttribute("display") !== "none") {
+          if (c[i].getAttribute("display") !== "none" && !($(c[i]).hasClass("tdex-ui-box-escape"))) {
             b = true;
             break;
           }
@@ -1158,7 +1195,7 @@ const tdex = (function() {
       // @todo ui 구현
       teUIManager.prototype.onTDEXButtonClick = function() {
         /*temporary*/
-        show.streamerSettings();
+        $($(".tdex-ui-box-ds").get(0).parentNode.parentNode).show();
       };
 
       let s_instance = new teUIManager();
@@ -1211,6 +1248,19 @@ const tdex = (function() {
 
     function WindowToggleMargin(jqWin) {
       jqWin.find(".tdex-ui-box-margin").addClass("tdex-ui-box-margin-visible");
+    }
+
+    function WindowMarginAsCloseButton(jqWin) {
+      jqWin.find(".tdex-ui-box-margin").click((e) => {
+        let elm = e.target;
+        while (!($(elm).hasClass("tdex-ui-box"))) {
+          elm = elm.parentNode;
+        }
+        WindowHide($(elm));
+        if (!($(elm).hasClass("tdex-ui-box-escape"))) {
+          UIManager.getInstance().removeFromWindowContainer(elm);
+        }
+      });
     }
   
     function WindowApplyLayout(jqWin, layout_fn) {
@@ -1275,7 +1325,7 @@ const tdex = (function() {
     }
 
     function SwitchGetText(jqObject) {
-      return(jqObject.get(0).getATtribute("data-a-text"));
+      return(jqObject.get(0).getAttribute("data-a-text"));
     }
 
     function SwitchSetText(jqObject, t) {
@@ -1357,6 +1407,7 @@ const tdex = (function() {
       WindowHide: WindowHide,
       WindowChangeContent: WindowChangeContent,
       WindowToggleMargin: WindowToggleMargin,
+      WindowMarginAsCloseButton: WindowMarginAsCloseButton,
       WindowApplyLayout: WindowApplyLayout,
       CreateButton: CreateButton,
       ButtonSetText: ButtonSetText,
@@ -1653,6 +1704,99 @@ const tdex = (function() {
       return(teChatMessage);
     })(); // let ChatMessage = ...
 
+    /* @todo 검색창 추가
+     */
+    function AddDCConSelector() {
+      let jqWindow = ui.CreateWindow("box-ds");
+      jqWindow.addClass("tdex-ui-box-escape");
+      jqWindow.find(".tdex-ui-box-margin").click((e) => {
+        let elm = e.target;
+        while (!($(elm).hasClass("tdex-ui-box"))) {
+          elm = elm.parentNode;
+        }
+        ui.WindowHide($(elm));
+      });
+
+      jqWindow.find(".tdex-ui-box-content-container").append(
+        $("<div></div>").addClass("tdex-ui-ds-button-container").append(
+          $("<div></div>").attr("id", "tdex-ui-id-ds-button-license").addClass("tdex-ui-ds-button").append(
+            $("<img>")
+          )
+        ).append(
+          $("<div></div>").attr("id", "tdex-ui-id-ds-button-refresh").addClass("tdex-ui-ds-button").append(  
+            $("<img>")
+          )
+        ).append(
+          $("<div></div>").attr("id", "tdex-ui-id-ds-button-settings").addClass("tdex-ui-ds-button").append(  
+            $("<img>")
+          )
+        )
+      ).append(
+        $("<div></div>").addClass("tdex-ui-ds-list-container").append(
+          $("<ul></ul>").addClass("tdex-ui-ds-list")
+        )
+      );
+      jqWindow.find(".tdex-ui-box-container").append(
+        $("<div></div>").addClass("tdex-ui-box-ds-previewer").append(
+          $("<div></div>").addClass("tdex-ui-ds-previewer-name").append(
+            $("<span></span>")
+          )
+        ).append(
+          $("<img>").addClass("tdex-ui-ds-previewer-image")
+        )
+      );
+      jqWindow.find("#tdex-ui-id-ds-button-license").get(0).lastElementChild.src = kResourceIconInfo;
+      jqWindow.find("#tdex-ui-id-ds-button-refresh").get(0).lastElementChild.src = kResourceIconRefresh;
+      jqWindow.find("#tdex-ui-id-ds-button-settings").get(0).lastElementChild.src = kResourceIconSettings;
+      jqWindow.find("#tdex-ui-id-ds-button-license").click(() => {
+        ui.show.license();
+        jqWindow.hide();
+      });
+      jqWindow.find("#tdex-ui-id-ds-button-refresh").click(() => {
+        jqWindow.hide();
+        jqWindow.remove();
+        AddDCConSelector().show();
+      });
+      jqWindow.find("#tdex-ui-id-ds-button-settings").get(0).lastElementChild.src = kResourceIconSettings;
+      jqWindow.find("#tdex-ui-id-ds-button-settings").click(() => { jqWindow.hide(); ui.show.streamerSettings(); });
+
+      let jqList = jqWindow.find(".tdex-ui-ds-list");
+      let dl = DCConListManager.getInstance().getDL();
+      let flags = new Set();
+      for (let [key, value] of dl) {
+        if (flags.has(value["path"])) {
+          continue;
+        }
+        flags.add(value["path"]);
+        jqList.append(
+          $("<li></li>").addClass("tdex-ui-dccon-icon").attr("data-clipboard-text", "~" + key).attr("data-a-dccon-name", "~" + key).append(
+            $("<img>").attr("src", value["path"]).attr("alt", "~" + key)
+          )
+        );
+      }
+      jqList.mouseout((e) => {
+        $(jqWindow.get(0).lastElementChild.lastElementChild).hide();
+        e.stopPropagation();
+      });
+      jqList.find(".tdex-ui-dccon-icon").click(() => {
+        jqWindow.hide();
+      });
+      jqList.find(".tdex-ui-dccon-icon").mouseenter((e) => {
+        let jq = $(jqWindow.get(0).lastElementChild.lastElementChild);
+        jq.find(".tdex-ui-ds-previewer-name").children().html(e.target.parentNode.getAttribute("data-a-dccon-name"));
+        jq.find(".tdex-ui-ds-previewer-image").attr("src", e.target.getAttribute("src"));
+        jq.show();
+        e.stopPropagation();
+      });
+      (new Clipboard(".tdex-ui-dccon-icon"));
+
+      ui.WindowMarginAsCloseButton(jqWindow);
+      $(jqWindow.get(0).lastElementChild.lastElementChild).hide();
+      jqWindow.hide();
+      $("#root").append(jqWindow);
+      return(jqWindow);
+    }
+
     /* @todo www.twitch.tv/* 채팅창 지원
      */
     function AddTDEXButtonToChattingRoom() {
@@ -1678,6 +1822,7 @@ const tdex = (function() {
           return;
         }
       }
+      AddDCConSelector(jqObject);
       jqObject.click(ui.UIManager.getInstance().onTDEXButtonClick.bind(ui.UIManager.getInstance()));
     } 
 
@@ -2236,9 +2381,6 @@ const tdex = (function() {
       base.Waitable.call(this);
       this._jodl = null;
       this._ssdl = null;
-      this._enableJODL = false;
-      this._enableSSDL = false;
-      this._enableLimitedJODL = false;
       this._observerId = null;
     }
     teDCConListManager.prototype = Object.create(base.Waitable.prototype);
@@ -2248,29 +2390,32 @@ const tdex = (function() {
     teDCConListManager.prototype.init = function() {
       this._jodl = new Map();
       this._ssdl = new Map();
-      this._enableJODL = false;
-      this._enableSSDL = false;
-      this._enableLimitedJODL = Settings.get(kSettingsBSEnableLimitedJODL, false);
       this.loadJODL();
       this._observerId = StreamerInspector.getInstance().addObserver(this.onStreamerChange.bind(this));
       debug.log("DCConListManager.init() >> StreamerInspector's observer id is " + this._observerId + ".");
     };
 
     teDCConListManager.prototype.getDCConImageUriByName = function(dcconName) {
-      let ss = Settings.ss(StreamerInspector.getInstance().getStreamerName());
-      let dcconImageUri = null;
-      if (ss.isEnableSSDL()) {
-        dcconImageUri = this._ssdl.get(dcconName)
-        if (!dcconImageUri && ss.isEnableJODL() && !ss.get(kSettingsSSEnableLimitedJODL)) {
-          dcconImageUri = this._jodl.get(dcconName);
-        }
-      }
-      else if (ss.isEnableJODL()) {
-        dcconImageUri = this._jodl.get(dcconName);
-      }
+      // DCConListManager.mergeDL() 에서 JODL 을 SSDL 에 합치므로 SSDL 에서만 검색
+      let dcconImageUri = this._ssdl.get(dcconName);
       return(dcconImageUri ? dcconImageUri["path"] : null);
     };
 
+    teDCConListManager.prototype.mergeDL = function() {
+      let ss = Settings.ss(StreamerInspector.getInstance().getStreamerName());
+      if (!ss.isEnableJODL() || (ss.get(kSettingsSSEnableLimitedJODL) && this._ssdl.size)) {
+        return;
+      }
+      for (let [key, value] of this._jodl) {
+        if (!this._ssdl.has(key)) {
+          this._ssdl.set(key, value);
+        }
+      }
+    };
+
+    teDCConListManager.prototype.getDL = function() {
+      return(this._ssdl);
+    };
 
     teDCConListManager.prototype.loadJODL = function() {
       if (this._jodl.size > 0) {
@@ -2305,13 +2450,17 @@ const tdex = (function() {
       }
 
       this.setBad();
-      this._ssdl = null;
+      this._ssdl.clear();
       if (!ss.isEnableSSDL()) {
+        this.mergeDL();
+        this.setGood();
         return;
       }
       let ssdlJsonUri = ss.getSSDLUri();
       if (!ssdlJsonUri) {
         WaitForHelper(ui.UIManager.getInstance(), () => { ui.template.Alert("'스트리머 전용 디시콘 리스트' 설정이 켜져있지만 디시콘 리스트 URI 가 입력되지 않았습니다.", true); });
+        this.mergeDL();
+        this.setGood();
         return;
       }
       NS_WE_API.storage.local.get(
@@ -2322,6 +2471,9 @@ const tdex = (function() {
           if (!jsonString) {
             WaitForResponse(ss.getSSDLUri(), function(xhr) {
               try {
+                if (xhr.responseText.length < 1) {
+                  throw("");
+                }
                 dic[streamerName] = JSON.stringify(JSON.parse(xhr.responseText));
                 NS_WE_API.storage.local.set({[kStorageStreamerSpecificDCConList]: JSON.stringify(dic)}, () => { DCConListManager.getInstance().loadSSDL(streamerName); });
               }
@@ -2330,13 +2482,14 @@ const tdex = (function() {
                   ui.UIManager.getInstance(),
                   () => { ui.template.Alert("스트리머 전용 디시콘 리스트 JSON 파싱을 실패하였습니다.<br/>" + ss.getSSDLUri() + " 가 유효한 주소인지 확인해주세요.", true); }
                 );
+                this.mergeDL();
                 this.setGood();
               }
             });
             return;
           }
-          this._ssdl = new Map();
           fickle.ParseDCConListFromJODLFormat(jsonString, this._ssdl);
+          this.mergeDL();
           this.setGood();
           app.log("Streamer specific DCCon List was successfully loaded. this contains " + this._ssdl.size + " DCCons.");
         }.bind(this)
@@ -2563,7 +2716,7 @@ const tdex = (function() {
 let app = (function() {
   function Application() {
     this._name    = "Twitch dccon addon";
-    this._version = "1.2.0d";
+    this._version = "1.2.0";
   }
 
   Application.prototype.firstRun = function() {

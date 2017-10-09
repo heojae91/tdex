@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "name": "Twitch DCCon Addon",
+  "version": "1.2.0",
+
+  "permissions": [
+    "storage",
+    "webRequest",
+    "<all_urls>"
+  ],
+
+  "content_scripts": [
+    {
+      "matches":  [ "https://go.twitch.tv/*", "https://www.twitch.tv/*" ],
+      "css":      [ "css/tdex_ui.css" ],
+      "js":       [ "js/jquery_1_12_4_min.js", "js/clipboard_1_7_1.js", "js/twitch_dccon_addon.js" ]
+    }
+  ]
+}
