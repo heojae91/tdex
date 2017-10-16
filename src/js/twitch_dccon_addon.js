@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Twitch DCCon Addon
 // @namespace    twitch_extension
-// @version      1.2.1
+// @version      1.2.2
 // @description  Replace a dccon command text with image.
 // @author       Jirap
 // @include      https://go.twitch.tv/*
@@ -26,6 +26,7 @@
   // jQuery 
   // Copyright JS Foundation and other contributors, https://js.foundation/
   // MIT License
+  const $ = jQuery.noConflict(true);
   
   // clipboard.js
   // Copyright Zeno Rocha, https://clipboardjs.com/
@@ -1478,11 +1479,11 @@
           case kPageTypeBetaChattingRoom:
           case kPageTypeBetaRecordedChattingRoom: {
             let handler = function() {
-              callback(document.getElementsByClassName("channel-header__user")[0].childNodes[1].innerHTML.trim().toUpperCase());
+              callback(document.getElementsByClassName("channel-header__user")[0].getElementsByTagName("H5")[0].innerHTML.trim().toUpperCase());
             };
             let elmFinder = () => { 
               let elms = document.getElementsByClassName("channel-header__user");
-              return(elms.length > 0 && elms[0].childNodes[1].innerHTML.trim().length > 0);
+              return(elms.length > 0 && elms[0].getElementsByTagName("H5")[0].innerHTML.trim().length > 0);
             };
             let condition = WaitForStable(1000, WaitForLimit(10, WaitForTrue(elmFinder))); 
             WaitForHelper(condition, handler);
@@ -2729,7 +2730,7 @@
   let app = (function() {
     function Application() {
       this._name    = "Twitch dccon addon";
-      this._version = "1.2.1";
+      this._version = "1.2.2";
     }
   
     Application.prototype.firstRun = function() {
